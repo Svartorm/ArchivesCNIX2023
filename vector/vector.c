@@ -1,11 +1,7 @@
-<<<<<<< Updated upstream
-#include <stdio.h>
-#include <stdlib.h>
-=======
->>>>>>> Stashed changes
 #include "vector.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
 struct vector *vector_init(size_t n)
 {
@@ -39,53 +35,64 @@ struct vector *vector_resize(struct vector *v, size_t n)
     if (!v)
         return NULL;
 
-    if (n == v->size)
+    if (n == 0)
         return v;
 
-    if (n < v->capacity)
+    size_t kapa = v->capacity;
+
+    if (n <= v->capacity)
     {
-        for (size_t i = v->size; i > n; i++)
-        {
-            v->size--;
-            if (v->size < v->capacity / 2)
-            {
-                int *qwq = realloc(v->data, v->capacity / 2 * sizeof(int));
-                if (!qwq)
-                    return NULL;
+        if (n < v->size)
+            v->size = n;
 
-                v->capacity /= 2;
-                v->data = qwq;
-            }
-        }
+        // Resize the vector
+        while (kapa > n)
+            kapa /= 2;
 
-        v->size = n;
+        int *qwq = realloc(v->data, kapa * sizeof(int));
+        if (!qwq)
+            return NULL;
+
+        v->data = qwq;
+        v->capacity = kapa;
 
         return v;
     }
 
-    int *qwq = realloc(v->data, v->size * 2 * sizeof(int));
+    while (kapa < n)
+        kapa *= 2;
+
+    int *qwq = realloc(v->data, kapa * sizeof(int));
     if (!qwq)
         return NULL;
 
-    v->capacity *= 2;
     v->data = qwq;
+    v->capacity = kapa;
 
     return v;
 }
 
 struct vector *vector_append(struct vector *v, int elt)
 {
-    v = vector_resize(v, v->size + 1);
     if (!v)
         return NULL;
 
-    v->data[v->size - 1] = elt;
+    if (v->size == v->capacity)
+    {
+        struct vector *qwq = vector_resize(v, v->capacity * 2);
+        if (!qwq)
+            return NULL;
+        v = qwq;
+    }
+
+    v->data[v->size++] = elt;
+
     return v;
 }
 
 void vector_print(const struct vector *v)
 {
-    if (!v)
+    if (!v || v->size == 0)
     {
         printf("\n");
         return;
@@ -119,12 +126,21 @@ struct vector *vector_insert(struct vector *v, size_t i, int elt)
     if (!v || i > v->size)
         return NULL;
 
-    vector_resize(v, v->size + 1);
+    if (v->size == v->capacity)
+    {
+        size_t kapa = v->capacity * 2;
+        int *qwq = realloc(v->data, kapa * sizeof(int));
+        if (!qwq)
+            return NULL;
+        v->data = qwq;
+        v->capacity = kapa;
+    }
 
-    for (size_t j = v->size - 1; j > i; j--)
-        v->data[j] = v->data[j - 1];
+    for (size_t u = v->size; u > i; u--)
+        v->data[u] = v->data[u - 1];
 
     v->data[i] = elt;
+    v->size++;
 
     return v;
 }
@@ -134,10 +150,67 @@ struct vector *vector_remove(struct vector *v, size_t i)
     if (!v || i >= v->size)
         return NULL;
 
-    for (size_t j = i; j < v->size - 1; j++)
-        v->data[j] = v->data[j + 1];
+    for (size_t u = i; u < v->size - 1; u++)
+        v->data[u] = v->data[u + 1];
 
-    vector_resize(v, v->size - 1);
+    v->size--;
+
+    // If too small, skrink the vector
+    if (v->size < v->capacity / 2)
+    {
+        size_t kapa = v->capacity / 2;
+        if (kapa < 1)
+            kapa = 1;
+
+        int *qwq = realloc(v->data, kapa * sizeof(int));
+        if (!qwq)
+            return NULL;
+
+        v->data = qwq;
+        v->capacity = kapa;
+    }
 
     return v;
 }
+
+/*
+int main(void)
+{
+    // test resize
+    struct vector *v = vector_init(1);
+    if (!v)
+        return 1;
+
+    for (size_t i = 0; i < 10; i++)
+    {
+        struct vector *qwq = vector_append(v, i);
+        if (!qwq)
+            return 1;
+        v = qwq;
+
+        // Print vector capacity
+        printf("Capacity: %zu\n", v->capacity);
+    }
+
+    vector_print(v);
+
+    for (size_t i = 10; i > 0; i--)
+    {
+        struct vector *qwq = vector_remove(v, i-1);
+        if (!qwq)
+            return 1;
+        v = qwq;
+
+        // Print vector size
+        printf("Size: %zu\n", v->size);
+        // Print vector capacity
+        printf("Capacity: %zu\n", v->capacity);
+    }
+
+    vector_print(v);
+
+    // Free vector
+    vector_destroy(v);
+    return 0;
+}
+*/

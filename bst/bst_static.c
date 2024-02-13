@@ -1,6 +1,7 @@
 #include "bst_static.h"
 
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 struct bst *init(size_t capacity)
@@ -22,55 +23,60 @@ struct bst *init(size_t capacity)
     return tree;
 }
 
+void increase_capacity(struct bst *tree)
+{
+    size_t new_capacity = tree->capacity * 2;
+    struct value **new_data =
+        realloc(tree->data, new_capacity * sizeof(struct value *));
+    if (new_data == NULL)
+        return;
+
+    // Set new data to NULL
+    for (size_t i = tree->capacity; i < new_capacity; i++)
+        new_data[i] = NULL;
+
+    tree->data = new_data;
+    tree->capacity = new_capacity;
+}
+
 void add(struct bst *tree, int value)
 {
+    // Add a new value to the tree
     if (tree == NULL)
         return;
 
+    // Check if value already exists
+    if (search(tree, value) != -1)
+        return;
+
+    // Check if tree is full
     if (tree->size >= tree->capacity)
     {
-        size_t qwq = tree->capacity * 2;
-
-        // Create new data
-        struct value **new = realloc(tree->data, qwq * sizeof(struct value *));
-        if (new == NULL)
-            return;
-
-        // Fill the new data array with NULL
-        for (size_t i = tree->capacity; i < qwq; i++)
-            tree->data[i] = NULL;
-
-        tree->data = new;
-        tree->capacity = qwq;
+        // Double the capacity of the tree
+        increase_capacity(tree);
     }
 
-    struct value *val = malloc(sizeof(struct value));
+    // Create new value
+    struct value *new = calloc(1, sizeof(struct value));
+    if (new == NULL)
+        return;
 
-    val->val = value;
+    new->val = value;
 
-    size_t root = 0;
-    size_t left = 2 * root + 1;
-    size_t right = 2 * root + 2;
-
-    while (root <= tree->capacity)
+    // Add new value to bst
+    size_t i = 0;
+    while (tree->data[i] != NULL)
     {
-        if (!tree->data[root])
-        {
-            tree->data[root] = val;
-            return;
-        }
+        if (value < tree->data[i]->val)
+            i = 2 * i + 1;
+        else
+            i = 2 * i + 2;
 
-        if (tree->data[root]->val < value)
-        {
-            root = left;
-            continue;
-        }
-
-        root = right;
+        if (i >= tree->capacity)
+            increase_capacity(tree);
     }
-
-    free(val);
-    return;
+    tree->data[i] = new;
+    tree->size++;
 }
 
 int search(struct bst *tree, int value)
@@ -96,3 +102,27 @@ void bst_free(struct bst *tree)
     free(tree->data);
     free(tree);
 }
+
+/*
+// Mqin to test bst add
+
+int main(void)
+{
+    struct bst *tree = init(10);
+
+    add(tree, 1);
+    add(tree, 2);
+    add(tree, 3);
+    add(tree, 4);
+    add(tree, 5);
+    add(tree, 6);
+    add(tree, 7);
+
+    for (size_t i = 0; i < tree->capacity; i++)
+        if (tree->data[i])
+            printf("%d\n", tree->data[i]->val);
+
+    bst_free(tree);
+    return 0;
+}
+*/

@@ -1,6 +1,7 @@
 #include "variant.h"
 
 #include <stdio.h>
+#include <string.h>
 
 void variant_display(const struct variant *e)
 {
@@ -30,6 +31,9 @@ void variant_display(const struct variant *e)
 
 bool variant_equal(const struct variant *left, const struct variant *right)
 {
+    if (!left && !right)
+        return true;
+
     if (!left || !right)
         return false;
 
@@ -73,10 +77,15 @@ float variant_sum(const struct variant *array, size_t len)
     for (size_t i = 0; i < len; i++)
     {
         if (array[i].type != TYPE_FLOAT && array[i].type != TYPE_INT)
-            return 0;
+            continue;
 
-        sum += array[i].type == TYPE_FLOAT ? array[i].value.float_v
-                                           : array[i].value.int_v;
+        float toadd = 0;
+        if (array[i].type == TYPE_INT)
+            toadd = array[i].value.int_v;
+        else
+            toadd = array[i].value.float_v;
+
+        sum += toadd;
     }
 
     return sum;

@@ -1,6 +1,12 @@
-#include <stdio.h>
+#include <stddef.h>
 
-int main(void)
+void *my_memcpy(void *dest, const void *source, size_t num)
 {
-    return 0;
+    unsigned char *pdest = dest;
+    const unsigned char *psource = source;
+
+    while (num-- > 0)
+        *pdest++ = *psource++;
+
+    return dest;
 }
